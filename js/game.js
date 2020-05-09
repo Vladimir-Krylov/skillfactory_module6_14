@@ -1,50 +1,78 @@
-const numDivs = 36;
 const maxHits = 10;
 
 let hits = 0;
+let hitsMiss = 0;
 let firstHitTime = 0;
 
-function round() {
-  // FIXME: надо бы убрать "target" прежде чем искать новый
-
-  let divSelector = randomDivId();
-  $(divSelector).addClass("target");
-  // TODO: помечать target текущим номером
-
-  // FIXME: тут надо определять при первом клике firstHitTime
-
-  if (hits === maxHits) {
-    endGame();
-  }
+function declOfNum(number, titles) {  
+    cases = [2, 0, 1, 1, 1, 2];  
+    return titles[ (number%100 > 4 && number%100 < 20) ? 2 : cases[(number%10 < 5) ? number%10 : 5] ];  
 }
 
-function endGame() {
-  // FIXME: спрятать игровое поле сначала
+function startGame() {
+  $(".game-field").removeClass('d-none');
+  $("#start-game").addClass('d-none');
+  $("#button-reload").removeClass('d-none');
 
-  let totalPlayedMillis = getTimestamp() - firstHitTime;
-  let totalPlayedSeconds = Number(totalPlayedMillis / 1000).toPrecision(3);
-  $("#total-time-played").text(totalPlayedSeconds);
+  round();
+  firstHitTime = getTimestamp();
+  $(".game-field").click(handleClick);
+}
 
-  $("#win-message").removeClass("d-none");
+function round() {
+  if (hits === maxHits) {
+    $(".game-field").addClass('d-none');
+    endGame();
+  } else {
+    $(".game-field").removeClass("target");
+    $(".game-field").removeClass("miss");
+
+    let divSelector = randomDivId();
+    $(divSelector).addClass("target");
+    $(".target").text(hits + 1);
+  }
 }
 
 function handleClick(event) {
-  // FIXME: убирать текст со старых таргетов. Кажется есть .text?
   if ($(event.target).hasClass("target")) {
-    hits = hits + 1;
+    hits += 1;
+    $(event.target).text("");
     round();
-  }
-  // TODO: как-то отмечать если мы промахнулись? См CSS класс .miss
+  } else {
+    $(event.target).addClass("miss");
+    hitsMiss -= 1;
+  };
+}
+
+function endGame() {
+  $('#game-fields').addClass("d-none");
+
+  let totalPlayedMillis = getTimestamp() - firstHitTime;
+  let totalPlayedSeconds = Number(totalPlayedMillis / 1000).toPrecision(3);
+  let totalPoints = hits + hitsMiss;
+
+  let totalGreen = maxHits + declOfNum(maxHits, [' зелёный квадрат', ' зелёных квадрата', ' зелёных квадратов']);
+
+  let $totalMessage = 'Вы нашли ' + totalGreen + ' за ' + totalPlayedSeconds + ' секунд'
+  let $allPoints = 'Количество очков с учетом промахов ' + totalPoints + ' из ' + maxHits
+ 
+  $("#total-message").text($totalMessage);
+  $("#all-points").text($allPoints);
+  $("#win-message").removeClass("d-none");
 }
 
 function init() {
-  // TODO: заказчик просил отдельную кнопку, запускающую игру а не просто по загрузке
-  round();
+  let $nameHeader = maxHits + declOfNum(maxHits, [' квадрат', ' квадрата', ' квадратов']);
 
-  $(".game-field").click(handleClick);
+  $("#name-header").text($nameHeader);
+  $("#start-game").click(function() {
+    startGame();
+  });
+
   $("#button-reload").click(function() {
     location.reload();
   });
+
 }
 
 $(document).ready(init);
